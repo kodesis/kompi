@@ -28,6 +28,6 @@ class Dashboard extends CI_Controller
 
         $data['content'] = 'webview/admin/dashboard';
         // $data['content_js'] = 'webview/home/home_js';
-        $this->load->view('parts/admin/wrapper', $data);
+        $this->load->view('parts/admin/Wrapper', $data);
     }
 }

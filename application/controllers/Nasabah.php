@@ -34,7 +34,7 @@ class Nasabah extends CI_Controller
     {
         $data['content'] = 'webview/admin/nasabah/nasabah_table';
         $data['content_js'] = 'webview/admin/nasabah/nasabah_table_js';
-        $this->load->view('parts/admin/wrapper', $data);
+        $this->load->view('parts/admin/Wrapper', $data);
     }
 
     public function ajax_list()
@@ -97,7 +97,7 @@ class Nasabah extends CI_Controller
         $data['title'] = 'Add';
         $data['content'] = 'webview/admin/nasabah/nasabah_form';
         $data['content_js'] = 'webview/admin/nasabah/nasabah_form_js';
-        $this->load->view('parts/admin/wrapper', $data);
+        $this->load->view('parts/admin/Wrapper', $data);
     }
 
     public function edit($id)
@@ -109,7 +109,7 @@ class Nasabah extends CI_Controller
         $data['title'] = 'Edit';
         $data['content'] = 'webview/admin/nasabah/nasabah_form';
         $data['content_js'] = 'webview/admin/nasabah/nasabah_form_js';
-        $this->load->view('parts/admin/wrapper', $data);
+        $this->load->view('parts/admin/Wrapper', $data);
     }
 
     public function proccess_add()

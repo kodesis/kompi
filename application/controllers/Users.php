@@ -34,7 +34,7 @@ class Users extends CI_Controller
     {
         $data['content'] = 'webview/admin/users/users_table';
         $data['content_js'] = 'webview/admin/users/users_table_js';
-        $this->load->view('parts/admin/wrapper', $data);
+        $this->load->view('parts/admin/Wrapper', $data);
     }
 
     public function ajax_list()
@@ -80,7 +80,7 @@ class Users extends CI_Controller
         $data['title'] = 'Add';
         $data['content'] = 'webview/admin/users/users_form';
         $data['content_js'] = 'webview/admin/users/users_form_js';
-        $this->load->view('parts/admin/wrapper', $data);
+        $this->load->view('parts/admin/Wrapper', $data);
     }
 
     public function edit($id)
@@ -91,7 +91,7 @@ class Users extends CI_Controller
         $data['title'] = 'Edit';
         $data['content'] = 'webview/admin/users/users_form';
         $data['content_js'] = 'webview/admin/users/users_form_js';
-        $this->load->view('parts/admin/wrapper', $data);
+        $this->load->view('parts/admin/Wrapper', $data);
     }
 
     public function proccess_add()

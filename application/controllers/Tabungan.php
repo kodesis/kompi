@@ -35,7 +35,7 @@ class Tabungan extends CI_Controller
         $data['nasabah'] = $this->tabungan_m->get_nasabah();
         $data['content'] = 'webview/admin/tabungan/tabungan_table';
         $data['content_js'] = 'webview/admin/tabungan/tabungan_table_js';
-        $this->load->view('parts/admin/wrapper', $data);
+        $this->load->view('parts/admin/Wrapper', $data);
     }
 
     public function ajax_list()
@@ -92,7 +92,7 @@ class Tabungan extends CI_Controller
         $data['title'] = 'Add';
         $data['content'] = 'webview/admin/tabungan/tabungan_form';
         $data['content_js'] = 'webview/admin/tabungan/tabungan_form_js';
-        $this->load->view('parts/admin/wrapper', $data);
+        $this->load->view('parts/admin/Wrapper', $data);
     }
 
     public function edit($id)
@@ -104,7 +104,7 @@ class Tabungan extends CI_Controller
         $data['title'] = 'Edit';
         $data['content'] = 'webview/admin/tabungan/tabungan_form';
         $data['content_js'] = 'webview/admin/tabungan/tabungan_form_js';
-        $this->load->view('parts/admin/wrapper', $data);
+        $this->load->view('parts/admin/Wrapper', $data);
     }
 
     public function proccess_add()
@@ -223,7 +223,7 @@ class Tabungan extends CI_Controller
         $data['nasabah'] = $this->tabungan_m->get_nasabah();
         $data['content'] = 'webview/admin/tabungan/simpanan_table';
         $data['content_js'] = 'webview/admin/tabungan/simpanan_table_js';
-        $this->load->view('parts/admin/wrapper', $data);
+        $this->load->view('parts/admin/Wrapper', $data);
     }
 
     public function ajax_list_detail($id)
@@ -302,7 +302,7 @@ class Tabungan extends CI_Controller
         $data['title'] = 'Add';
         $data['content'] = 'webview/admin/tabungan/simpanan_form';
         $data['content_js'] = 'webview/admin/tabungan/simpanan_form_js';
-        $this->load->view('parts/admin/wrapper', $data);
+        $this->load->view('parts/admin/Wrapper', $data);
     }
 
     public function transaksi_simpanan()
@@ -331,7 +331,7 @@ class Tabungan extends CI_Controller
         $data['title'] = 'Transaksi Simpanan';
         $data['content'] = 'webview/admin/tabungan/simpanan_form';
         $data['content_js'] = 'webview/admin/tabungan/simpanan_form_js';
-        $this->load->view('parts/admin/wrapper', $data);
+        $this->load->view('parts/admin/Wrapper', $data);
     }
 
     private function _parse_rupiah($rupiah)

@@ -39,6 +39,16 @@
             ?>
                 <form action="<?= base_url('nasabah/proccess_add') ?>" method="post" class="row">
                     <div class="form-group col-6">
+                        <label for="exampleInputEmail1">Username</label>
+                        <input type="username" class="form-control" name="username" id="username_add" value="<?= set_value('username', $form_data['username'] ?? '') ?>">
+
+                    </div>
+                    <div class="form-group col-6">
+                        <label for="exampleInputEmail1">Password</label>
+                        <input type="password" class="form-control" name="password" id="password_add" value="<?= set_value('password', $form_data['password'] ?? '') ?>">
+
+                    </div>
+                    <div class="form-group col-6">
                         <label for="exampleInputEmail1">Nama</label>
                         <input type="text" class="form-control" name="nama" id="nama_add" value="<?= set_value('nama', $form_data['nama'] ?? '') ?>">
 
@@ -144,6 +154,18 @@
                             <option value="WNA">WNA</option>
                         </select>
                     </div>
+                    <div class="form-group col-6">
+                        <label for="exampleInputEmail1">Kredit Limit</label>
+                        <input type="number" min="0" class="form-control" name="kredit_limit" id="kredit_limit_add" value="<?= set_value('kredit_limit', $form_data['kredit_limit'] ?? 0) ?>">
+                    </div>
+                    <div class="form-group col-6">
+                        <label for="exampleInputEmail1">Role</label>
+                        <!-- <input type="text" class="form-control" name="warga_negara" id="warga_negara_add"> -->
+                        <select class="form-control" name="role" id="role_add">
+                            <option selected value="2">User</option>
+                            <option value="1">Admin</option>
+                        </select>
+                    </div>
                     <!-- <div class="form-group form-check">
                         <input type="checkbox" class="form-check-input" id="exampleCheck1">
                         <label class="form-check-label" for="exampleCheck1">Check me out</label>
@@ -157,6 +179,23 @@
             ?>
                 <form action="<?= base_url('nasabah/proccess_edit') ?>" method="post" class="row">
                     <input type="hidden" name="no_cib" value="<?= $nasabah->no_cib ?>">
+                    <div class="form-group col-6">
+                        <label for="exampleInputEmail1">Username</label>
+                        <input type="username" class="form-control" name="username" id="username_edit" value="<?= $nasabah->username ?>">
+
+                    </div>
+                    <div class="form-group col-6">
+                        <label for="password_edit">Password</label>
+
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" value="" id="change_password_check">
+                            <label class="form-check-label" for="change_password_check">
+                                Check to change password
+                            </label>
+                        </div>
+
+                        <input type="password" class="form-control" name="password" id="password_edit" disabled>
+                    </div>
                     <div class="form-group col-6">
                         <label for="exampleInputEmail1">Nama</label>
                         <input type="text" class="form-control" name="nama" id="nama_edit" value="<?= $nasabah->nama ?>">
@@ -261,6 +300,14 @@
                         <select class="form-control" name="warga_negara" id="warga_negara_edit">
                             <option <?= $nasabah->warga_negara == "WNI" ? 'selected' : '' ?> value="WNI">WNI</option>
                             <option <?= $nasabah->warga_negara == "WNA" ? 'selected' : '' ?> value="WNA">WNA</option>
+                        </select>
+                    </div>
+                    <div class="form-group col-6">
+                        <label for="exampleInputEmail1">Role</label>
+                        <!-- <input type="text" class="form-control" name="warga_negara" id="warga_negara_add"> -->
+                        <select class="form-control" name="role" id="role_edit">
+                            <option <?= $nasabah->role == "2" ? 'selected' : '' ?> value="2">User</option>
+                            <option <?= $nasabah->role == "1" ? 'selected' : '' ?> value="1">Admin</option>
                         </select>
                     </div>
                     <!-- <div class="form-group form-check">

@@ -116,7 +116,19 @@ class Nasabah extends CI_Controller
     {
         // Assume input data is captured from POST. We collect this first 
         // to flash it back (old input) if validation fails.
+        $plain_password = $_POST['password'] ?? '';
+
+        // 2. Check if the password is not empty before attempting to hash it
+        $hashed_password = '';
+        if (!empty($plain_password)) {
+            // 3. Hash the password securely using the PASSWORD_DEFAULT algorithm (recommended)
+            $hashed_password = password_hash($plain_password, PASSWORD_DEFAULT);
+        }
+
+
         $data = [
+            'username' => $_POST['username'] ?? '',
+            'password' => $hashed_password,
             'nama' => $_POST['nama'] ?? '',
             'alamat' => $_POST['alamat'] ?? '',
             'no_ktp' => $_POST['no_ktp'] ?? '',
@@ -134,10 +146,18 @@ class Nasabah extends CI_Controller
             'tipe_nasabah' => $_POST['tipe_nasabah'] ?? '',
             'segmen_nasabah' => $_POST['segmen_nasabah'] ?? '',
             'warga_negara' => $_POST['warga_negara'] ?? '',
+            'kredit_limit' => $_POST['kredit_limit'] ?? 0,
+            'role' => $_POST['role'] ?? '2',
         ];
 
         // --- SET VALIDATION RULES (Conceptual Framework Syntax) ---
         // In a real framework, you would typically load the validation library first.
+        $this->form_validation->set_rules('username', 'Username', 'required|max_length[100]|is_unique[t_nasabah.username]');
+        $this->form_validation->set_rules(
+            'password',
+            'Password',
+            'required|min_length[8]|max_length[100]|regex_match[/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/]'
+        );
         $this->form_validation->set_rules('nama', 'Nama', 'required|max_length[100]');
         // $this->form_validation->set_rules('alamat', 'Alamat', 'required');
         $this->form_validation->set_rules('no_ktp', 'Nomor KTP', 'required|numeric|exact_length[16]'); // Assuming 16 digits
@@ -185,6 +205,7 @@ class Nasabah extends CI_Controller
         // Assume input data is captured from POST. We collect this first 
         // to flash it back (old input) if validation fails.
         $edit_data = [
+            'username' => $_POST['username'],
             'nama' => $_POST['nama'],
             'alamat' => $_POST['alamat'],
             'no_ktp' => $_POST['no_ktp'],
@@ -202,8 +223,18 @@ class Nasabah extends CI_Controller
             'tipe_nasabah' => $_POST['tipe_nasabah'],
             'segmen_nasabah' => $_POST['segmen_nasabah'],
             'warga_negara' => $_POST['warga_negara'],
+            'kredit_limit' => $_POST['kredit_limit'],
+            'role' => $_POST['role'],
         ];
 
+        if (isset($_POST['password']) && !empty($_POST['password'])) {
+
+            // 2. Hash the new password securely
+            $hashed_password = password_hash($_POST['password'], PASSWORD_DEFAULT);
+
+            // 3. Append the HASHED password to the $edit_data array
+            $edit_data['password'] = $hashed_password;
+        }
 
         $this->db->where('no_cib', $this->input->post('no_cib'));
         if ($this->db->update('t_nasabah', $edit_data)) {

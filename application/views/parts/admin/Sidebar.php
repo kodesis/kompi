@@ -55,12 +55,28 @@
                     <i class="fas fa-fw fa-university"></i>
                     <span>Menu Tabungan</span>
                 </a>
-                <div id="TabunganNav" class="collapse <?= $this->uri->segment(1) == 'tabungan' ? 'show' : '' ?>" aria-labelledby="headingTwo" data-parent="#accordionSidebar">
+                <div id="TabunganNav" class="collapse" aria-labelledby="headingTwo" data-parent="#accordionSidebar">
                     <div class="bg-white py-2 collapse-inner rounded">
                         <h6 class="collapse-header">Menu Tabungan:</h6>
                         <a class="collapse-item <?= $this->uri->segment(1) == 'tabungan' && $this->uri->segment(2) == ''  ? 'active' : '' ?>" href="<?= base_url() ?>tabungan">Tabungan</a>
                         <!-- <a class="collapse-item" <?= $this->uri->segment(1) == 'tabungan' && $this->uri->segment(2) == 'detail_tabungan'  ? 'active' : '' ?>href="<?= base_url() ?>tabungan/detail_tabungan">Detail Tabungan</a> -->
                         <!-- <a class="collapse-item" <?= $this->uri->segment(1) == 'tabungan' && $this->uri->segment(2) == 'detail_tabungan'  ? 'active' : '' ?>href="<?= base_url() ?>tabungan/detail_tabungan">Detail Tabungan</a> -->
+                    </div>
+                </div>
+            </li>
+            <li class="nav-item <?= $this->uri->segment(1) == 'kasbon' ? 'active' : '' ?>">
+                <a class="nav-link collapsed" href="#" data-toggle="collapse" data-target="#KasbonNav"
+                    aria-expanded="true" aria-controls="collapseTwo">
+                    <i class="fas fa-fw fa-university"></i>
+                    <span>Menu Kasbon</span>
+                </a>
+                <div id="KasbonNav" class="collapse" aria-labelledby="headingTwo" data-parent="#accordionSidebar">
+                    <div class="bg-white py-2 collapse-inner rounded">
+                        <h6 class="collapse-header">Menu Kasbon:</h6>
+                        <a class="collapse-item <?= $this->uri->segment(1) == 'kasbon' && $this->uri->segment(2) == ''  ? 'active' : '' ?>" href="<?= base_url() ?>kasbon/">Kasbon</a>
+                        <a class="collapse-item <?= $this->uri->segment(1) == 'kasbon' && $this->uri->segment(2) == 'add'  ? 'active' : '' ?>" href="<?= base_url() ?>kasbon/add">Tambah Kasbon</a>
+                        <a class="collapse-item" <?= $this->uri->segment(1) == 'kasbon' && $this->uri->segment(2) == 'verfikasi'  ? 'active' : '' ?>href="<?= base_url() ?>kasbon/verifikasi">Verifikasi</a>
+                        <!-- <a class="collapse-item" <?= $this->uri->segment(1) == 'kasbon' && $this->uri->segment(2) == 'detail_tabungan'  ? 'active' : '' ?>href="<?= base_url() ?>tabungan/detail_tabungan">Detail Tabungan</a> -->
                     </div>
                 </div>
             </li>

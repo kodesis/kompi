@@ -45,13 +45,14 @@ class Auth extends CI_Controller
 
 		$user = $this->login->user_login($username, $password);
 
+		// var_dump($user);
 		if (!empty($user)) {
 			$this->session->set_userdata([
-				// 'user_user_id'   => $user->uid,
+				'user_user_id'   => $user->no_cib,
 				'name'  => $user->nama,
 				'username'      => $user->username,
-				'golongan'      => $user->golongan,
-				'fasilitas'      => $user->fasilitas,
+				// 'golongan'      => $user->golongan,
+				// 'fasilitas'      => $user->fasilitas,
 				// 'limit'      => $user->limit,
 				// 'role'      => $role,
 				'user_logged_in' => true

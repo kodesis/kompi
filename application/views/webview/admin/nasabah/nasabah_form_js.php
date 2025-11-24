@@ -21,3 +21,18 @@
         }
     });
 </script>
+<script>
+    // Get the elements
+    const checkbox = document.getElementById('change_password_check');
+    const passwordInput = document.getElementById('password_edit');
+
+    // Add an event listener to the checkbox
+    checkbox.addEventListener('change', function() {
+        // Toggle the 'disabled' attribute based on the checkbox's checked state
+        if (this.checked) {
+            passwordInput.removeAttribute('disabled');
+        } else {
+            passwordInput.setAttribute('disabled', 'disabled');
+        }
+    });
+</script>

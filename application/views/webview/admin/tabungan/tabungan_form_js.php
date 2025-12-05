@@ -21,3 +21,14 @@
         }
     });
 </script>
+
+<script>
+    $(document).ready(function() {
+        // Inisialisasi Select2 pada elemen dengan ID 'no_cib_add'
+        $('#no_cib_add').select2({
+            // Opsi opsional: Placeholder saat tidak ada yang dipilih
+            placeholder: "Cari atau Pilih Nasabah",
+            allowClear: true // Opsi opsional: Memungkinkan menghapus pilihan
+        });
+    });
+</script>

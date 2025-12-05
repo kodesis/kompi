@@ -55,7 +55,6 @@
                             }
                             ?>
                         </select>
-                        <!-- <input type="text" class="form-control" name="password_confirmation" id="password_confirmation_add" value="12345" placeholder="Confirm password"> -->
                     </div>
                     <div class="form-group col-6">
                         <label for="exampleInputEmail1">Jenis Tabungan</label>
@@ -90,22 +89,22 @@
                     </div> -->
                     <div class="form-group col-6">
                         <label for="exampleInputEmail1">Spread Rate</label>
-                        <input type="number" class="form-control" name="spread_rate" id="spread_rate_add" value="<?= set_value('spread_rate', $form_data['spread_rate'] ?? '') ?>">
+                        <input type="number" class="form-control" name="spread_rate" id="spread_rate_add" value="<?= set_value('spread_rate', $form_data['spread_rate'] ?? 0) ?>">
 
                     </div>
                     <div class="form-group col-6">
                         <label for="exampleInputEmail1">Nominal Blokir</label>
-                        <input type="number" class="form-control" name="nominal_blokir" id="nominal_blokir_add" value="<?= set_value('nominal_blokir', $form_data['nominal_blokir'] ?? '') ?>">
+                        <input type="number" class="form-control" name="nominal_blokir" id="nominal_blokir_add" value="<?= set_value('nominal_blokir', $form_data['nominal_blokir'] ?? 0) ?>">
 
                     </div>
                     <div class="form-group col-6">
                         <label for="exampleInputEmail1">Pos Rate</label>
-                        <input type="number" class="form-control" name="pos_rate" id="pos_rate_add" value="<?= set_value('pos_rate', $form_data['pos_rate'] ?? '') ?>">
+                        <input type="number" class="form-control" name="pos_rate" id="pos_rate_add" value="<?= set_value('pos_rate', $form_data['pos_rate'] ?? 0) ?>">
 
                     </div>
                     <div class="form-group col-6">
                         <label for="exampleInputEmail1">No LSP</label>
-                        <input type="number" class="form-control" name="nolsp" id="nolsp_add" value="<?= set_value('no_lsp', $form_data['no_lsp'] ?? '') ?>">
+                        <input type="number" class="form-control" name="nolsp" id="nolsp_add" value="<?= set_value('no_lsp', $form_data['no_lsp'] ?? 0) ?>">
 
                     </div>
                     <!-- <div class="form-group form-check">

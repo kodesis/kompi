@@ -5,8 +5,8 @@
 
             <a href="<?= base_url('') ?>" class="logo d-flex align-items-center me-auto">
                 <!-- Uncomment the line below if you also wish to use an image logo -->
-                <!-- <img src="<?= base_url() ?>assets/img/logo.png" alt=""> -->
-                <h1 class="sitename">KOMPI</h1>
+                <img src="<?= base_url() ?>assets/img/logokompi.png" alt="">
+                <!-- <h1 class="sitename">KOMPI</h1> -->
             </a>
 
             <nav id="navmenu" class="navmenu">

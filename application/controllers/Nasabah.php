@@ -116,19 +116,10 @@ class Nasabah extends CI_Controller
     {
         // Assume input data is captured from POST. We collect this first 
         // to flash it back (old input) if validation fails.
-        $plain_password = $_POST['password'] ?? '';
-
-        // 2. Check if the password is not empty before attempting to hash it
-        $hashed_password = '';
-        if (!empty($plain_password)) {
-            // 3. Hash the password securely using the PASSWORD_DEFAULT algorithm (recommended)
-            $hashed_password = password_hash($plain_password, PASSWORD_DEFAULT);
-        }
-
 
         $data = [
             'username' => $_POST['username'] ?? '',
-            'password' => $hashed_password,
+            'password' => $_POST['password'],
             'nama' => $_POST['nama'] ?? '',
             'alamat' => $_POST['alamat'] ?? '',
             'no_ktp' => $_POST['no_ktp'] ?? '',
@@ -156,13 +147,14 @@ class Nasabah extends CI_Controller
         $this->form_validation->set_rules(
             'password',
             'Password',
-            'required|min_length[8]|max_length[100]|regex_match[/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/]'
+            // 'required|min_length[5]|max_length[100]|regex_match[/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{5,}$/]'
+            'required|min_length[5]|max_length[100]|regex_match[/^[A-Za-z\d@$!%*?&]{5,}$/]'
         );
         $this->form_validation->set_rules('nama', 'Nama', 'required|max_length[100]');
         // $this->form_validation->set_rules('alamat', 'Alamat', 'required');
-        $this->form_validation->set_rules('no_ktp', 'Nomor KTP', 'required|numeric|exact_length[16]'); // Assuming 16 digits
+        // $this->form_validation->set_rules('no_ktp', 'Nomor KTP', 'required|numeric|exact_length[16]'); // Assuming 16 digits
         $this->form_validation->set_rules('no_telp', 'No. Telp', 'numeric|max_length[15]');
-        $this->form_validation->set_rules('kode_ao', 'Kode AO', 'required');
+        // $this->form_validation->set_rules('kode_ao', 'Kode AO', 'required');
         // $this->form_validation->set_rules('tgl_pendaftaran', 'Tgl Pendaftaran', 'required|valid_date');
         $this->form_validation->set_rules('tipe_nasabah', 'Tipe Nasabah', 'required');
         $this->form_validation->set_rules('segmen_nasabah', 'Segmen Nasabah', 'required');
@@ -188,7 +180,16 @@ class Nasabah extends CI_Controller
             // header('Location: ' . base_url('nasabah/add'));
             // exit();
         } else {
+            $plain_password = $_POST['password'] ?? '';
 
+            // 2. Check if the password is not empty before attempting to hash it
+            $hashed_password = '';
+            if (!empty($plain_password)) {
+                // 3. Hash the password securely using the PASSWORD_DEFAULT algorithm (recommended)
+                $hashed_password = password_hash($plain_password, PASSWORD_DEFAULT);
+            }
+
+            $data['password'] = $hashed_password;
             $this->db->insert('t_nasabah', $data);
             // --- VALIDATION SUCCESS: Process the data ---
 

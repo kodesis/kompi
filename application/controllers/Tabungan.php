@@ -167,7 +167,7 @@ class Tabungan extends CI_Controller
             $this->session->set_flashdata('message_name', 'Tabungan Berhasil di Tambahkan.');
 
             // Redirect to a success page
-            redirect('tabungan');
+            redirect('tabungan/add');
             exit();
         }
     }
@@ -559,5 +559,227 @@ class Tabungan extends CI_Controller
             // redirect('tabungan/transaksi_simpanan');
         }
         redirect('tabungan/transaksi_simpanan');
+    }
+
+    public function process_insert_excel_simpanan()
+    {
+        $this->load->library('upload');
+        require APPPATH . 'third_party/autoload.php';
+        require APPPATH . 'third_party/psr/simple-cache/src/CacheInterface.php';
+        set_time_limit(300); // 300 seconds = 5 minutes
+        $config['upload_path'] = FCPATH . 'uploads/simpanan';
+        $config['allowed_types'] = 'xls|xlsx|csv';
+        $this->upload->initialize($config);
+
+        if (!$this->upload->do_upload('file_excel')) {
+            $error = $this->upload->display_errors();
+            echo json_encode(['status' => false, 'message' => $error]);
+            return;
+        }
+
+        $file_data = $this->upload->data();
+        $file_path = $file_data['full_path'];
+
+        try {
+            $spreadsheet = \PhpOffice\PhpSpreadsheet\IOFactory::load($file_path);
+            $worksheet = $spreadsheet->getActiveSheet();
+
+            $this->db->trans_begin(); // Start transaction
+
+            $dataInsert = [];
+
+            // === Start your ID generator ===
+            $current_year = date('Y');
+            $latest_entry = $this->tabungan_m->get_latest_entry($current_year);
+
+            if ($latest_entry) {
+                // Assuming $latest_entry->id is in the format YYYY##### (e.g., 202500005)
+                // Extract the sequence number part (last 5 digits)
+                $sequence_number_str = substr($latest_entry->id, -5);
+                $latest_sequence_number = (int) $sequence_number_str;
+            } else {
+                // If no entry exists for the current year, start the sequence at 1
+                $latest_sequence_number = 0;
+            }
+            // === End your ID generator ===
+
+            foreach ($worksheet->getRowIterator() as $rowIndex => $row) {
+                // Skip header
+                if ($rowIndex == 1 || $rowIndex == 2) continue;
+
+                $cellIterator = $row->getCellIterator();
+                $cellIterator->setIterateOnlyExistingCells(false);
+
+                $rowData = [];
+                foreach ($cellIterator as $cell) {
+                    // $rowData[] = $cell->getValue();
+                    $rowData[] = $cell->getCalculatedValue(); // <-- Use this for formula results
+                }
+
+                // Generate next ID
+                $latest_sequence_number++;
+                $new_sequence_number_padded = str_pad($latest_sequence_number, 5, '0', STR_PAD_LEFT);
+                $new_id = $current_year . $new_sequence_number_padded;
+                // --- Corrected column mapping based on your template ---
+                // A = No (Ignored)
+                // B = Nomor Anggota -> rowData[1]
+                // C = Nominal -> rowData[2]
+                // D = Keterangan -> rowData[3]
+                // E = Kode Tipe Simpanan -> rowData[4]
+                // F = Tanggal Bayar -> rowData[5]
+                // G = Sampai Dengan -> rowData[6]
+
+                $no_tabungan = isset($rowData[1]) ? $rowData[1] : null;
+
+                // echo $nomor_anggota;
+                // echo $nomor_anggota;
+                // Find id_anggota from database
+                $tabungan = $this->db->get_where('t_tabungan', ['no_tabungan' => $no_tabungan])->row();
+
+                // --- THE UPDATED LOGIC IS HERE ---
+                $hasError = false;
+                if (!$tabungan) {
+                    // Rollback transaction immediately on error
+                    $this->db->trans_rollback();
+                    echo json_encode([
+                        'status' => false,
+                        'message' => 'Tabungan Tidak Di Temukan pada baris ' . $rowIndex . '.'
+                    ]);
+                    $hasError = true;
+                    break; // Exit the loop
+                }
+                // --- END OF UPDATED LOGIC ---
+
+                $id_tabungan = $tabungan->no_tabungan;
+
+                $tipe_transaksi = isset($rowData[2]) ? $rowData[2] : null;
+
+                if (isset($rowData[3])) {
+                    $nominal = (float)str_replace(',', '', $rowData[3]);
+                } else {
+                    echo json_encode([
+                        'status' => false,
+                        'message' => 'Nominal Tidak Di Temukan pada baris ' . $rowIndex . '.'
+                    ]);
+                    $hasError = true;
+                    break; // Exit the loop
+                }
+                if (isset($rowData[4])) {
+                    $keterangan = strtoupper($rowData[4]);
+                } else {
+                    $keterangan = "IURAN BULAN " . strtoupper($bulan_nama) . " " . $tahun;
+
+                    // echo json_encode([
+                    //     'status' => false,
+                    //     'message' => 'Keterangan Tidak Di Temukan pada baris ' . $rowIndex . '.'
+                    // ]);
+                    // $hasError = true;
+                    // break; // Exit the loop
+                }
+
+                $column_letter = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex(6);
+
+                // Get the cell object using the column letter and row index
+                $cell = $worksheet->getCell($column_letter . $rowIndex);
+
+                // Now, get the calculated value from the cell
+                $tanggal_excel = isset($rowData[5]) ? $cell->getCalculatedValue() : null;
+
+                // $tanggal_excel = isset($rowData[5]) ? $rowData[5] : null;
+
+                $tanggal_bayar = null;
+                if (is_numeric($tanggal_excel)) {
+                    // Excel date serial to Y-m-d
+                    $tanggal_bayar = date('Y-m-d', \PhpOffice\PhpSpreadsheet\Shared\Date::excelToTimestamp($tanggal_excel));
+                } elseif (!empty($tanggal_excel)) {
+                    // Already a valid date string
+                    $tanggal_bayar = date('Y-m-d', strtotime($tanggal_excel));
+                } else {
+                    // If no date is found, you might want to set a default.
+                    // For this example, let's set it to the current time.
+                    // $tanggal_bayar = date('Y-m-d H:i:s');
+                    echo json_encode([
+                        'status' => false,
+                        'message' => 'Tanggal Transaksi Tidak Di Temukan pada baris ' . $rowIndex . '.'
+                    ]);
+                    $hasError = true;
+                    break; // Exit the loop
+                }
+                $date_for_keterangan_tanggal_bayar = new DateTime($tanggal_bayar);
+
+
+                $column_letter = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex(7);
+
+                // Get the cell object using the column letter and row index
+                $cell = $worksheet->getCell($column_letter . $rowIndex);
+
+                // Now map Excel columns to database fields
+                $dataInsert[] = [
+                    'id'          => $new_id, // **USE GENERATED ID**
+                    'no_tabungan'  => $id_tabungan,
+                    'transaksi'  => $tipe_transaksi,
+                    'nominal'     =>  $nominal,
+                    'tgl_transaksi'   => $tanggal_bayar,
+                    'user_tr' => $this->session->userdata('user_user_id'),
+                    'ket'    => $keterangan,
+                    // 'id_koperasi' => $this->session->userdata('id_koperasi'),
+                ];
+            }
+
+            if (!$hasError) {
+                if (!empty($dataInsert)) {
+                    $this->db->insert_batch('t_detail_tabungan', $dataInsert); // Bulk insert
+
+                    $updateAnggota = [];
+
+                    foreach ($dataInsert as $item) {
+                        $no_tabungan = $item['no_tabungan'];
+                        // $this->db->select('no_cib');
+                        // $this->db->where('no_tabungan', $no_tabungan);
+                        // $tabungan = $this->db->get('t_tabungan')->row();
+                        // $id_nasabah = $tabungan->no_cib;
+                        // Hitung total nominal terbaru dari tabel iuran
+                        $this->db->select_sum('nominal');
+                        $this->db->where('no_tabungan', $no_tabungan);
+                        $total = $this->db->get('t_detail_tabungan')->row();
+
+                        $this->db->from('t_tabungan');
+                        $this->db->where('no_tabungan', $no_tabungan);
+                        $tabungan_now = $this->db->get()->row();
+
+                        // $tanggal_simpanan_terakhir = $tabungan_now->tanggal_simpanan_terakhir;
+
+                        // if ($item['sampai_dengan']  > $tanggal_simpanan_terakhir) {
+                        //     $tanggal_simpanan_terakhir = $item['sampai_dengan'];
+                        // }
+
+                        $updateTabungan[] = [
+                            'no_tabungan' => $no_tabungan,
+                            'nominal' => $total->nominal ?? 0,
+                            // 'tanggal_simpanan_terakhir' => $tanggal_simpanan_terakhir,
+                        ];
+                    }
+
+                    if (!empty($updateTabungan)) {
+                        $this->db->update_batch('t_tabungan', $updateTabungan, 'no_tabungan');
+                    } else {
+                        echo json_encode(['status' => false, 'message' => 'Gagal Update Iuran Koperasi']);
+                    }
+                }
+            }
+
+            if (!$hasError && $this->db->trans_status() === FALSE) {
+                $this->db->trans_rollback();
+                echo json_encode(['status' => false, 'message' => 'Database error while inserting data']);
+            } else if (!$hasError) {
+                $this->db->trans_commit();
+                echo json_encode(['status' => true, 'message' => 'Excel data inserted successfully']);
+            }
+        } catch (Exception $e) {
+            $this->db->trans_rollback(); // Ensure rollback on any exception
+            echo json_encode(['status' => false, 'message' => $e->getMessage()]);
+        } finally {
+            if (file_exists($file_path)) unlink($file_path);
+        }
     }
 }

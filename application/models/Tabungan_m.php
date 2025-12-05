@@ -326,4 +326,23 @@ class Tabungan_m extends CI_Model
     {
         return $this->db->insert('jurnal_tabungan', $data);
     }
+
+    public function get_latest_entry($year)
+    {
+        $this->db->select('id');
+        $this->db->from('t_detail_tabungan');
+
+        // 🏆 Best Approach: Use LIKE (allows index use for a leading match)
+        // This finds IDs starting with the year, e.g., '2025%'
+        $this->db->like('id', $year, 'after');
+
+        // OR, slightly worse performance but works:
+        // $this->db->where("LEFT(id, 4) =", $year); 
+
+        $this->db->order_by("id", "DESC");
+        $this->db->limit(1);
+
+        $query = $this->db->get();
+        return $query->row();
+    }
 }

@@ -51,6 +51,7 @@ class Auth extends CI_Controller
 				'user_user_id'   => $user->no_cib,
 				'name'  => $user->nama,
 				'username'      => $user->username,
+				'role'      => $user->role,
 				// 'golongan'      => $user->golongan,
 				// 'fasilitas'      => $user->fasilitas,
 				// 'limit'      => $user->limit,

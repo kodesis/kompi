@@ -38,17 +38,22 @@
                     <span>Dashboard</span></a>
             </li>
 
-            <li class="nav-item <?= $this->uri->segment(1) == 'users' ? 'active' : '' ?>">
+            <!-- <li class="nav-item <?= $this->uri->segment(1) == 'users' ? 'active' : '' ?>">
                 <a class="nav-link" href="<?= base_url('users') ?>">
                     <i class="fas fa-fw fa-table"></i>
                     <span>Users</span></a>
-            </li>
-
-            <li class="nav-item <?= $this->uri->segment(1) == 'nasabah' ? 'active' : '' ?>">
-                <a class="nav-link" href="<?= base_url('nasabah') ?>">
-                    <i class="fas fa-fw fa-table"></i>
-                    <span>Nasabah</span></a>
-            </li>
+            </li> -->
+            <?php
+            if ($this->session->userdata('role') == 1) {
+            ?>
+                <li class="nav-item <?= $this->uri->segment(1) == 'nasabah' ? 'active' : '' ?>">
+                    <a class="nav-link" href="<?= base_url('nasabah') ?>">
+                        <i class="fas fa-fw fa-table"></i>
+                        <span>Nasabah</span></a>
+                </li>
+            <?php
+            }
+            ?>
             <li class="nav-item <?= $this->uri->segment(1) == 'tabungan' ? 'active' : '' ?>">
                 <a class="nav-link collapsed" href="#" data-toggle="collapse" data-target="#TabunganNav"
                     aria-expanded="true" aria-controls="collapseTwo">
@@ -74,9 +79,16 @@
                     <div class="bg-white py-2 collapse-inner rounded">
                         <h6 class="collapse-header">Menu Kasbon:</h6>
                         <a class="collapse-item <?= $this->uri->segment(1) == 'kasbon' && $this->uri->segment(2) == ''  ? 'active' : '' ?>" href="<?= base_url() ?>kasbon/">Kasbon</a>
-                        <a class="collapse-item <?= $this->uri->segment(1) == 'kasbon' && $this->uri->segment(2) == 'add'  ? 'active' : '' ?>" href="<?= base_url() ?>kasbon/add">Tambah Kasbon</a>
-                        <a class="collapse-item" <?= $this->uri->segment(1) == 'kasbon' && $this->uri->segment(2) == 'verfikasi'  ? 'active' : '' ?>href="<?= base_url() ?>kasbon/verifikasi">Verifikasi</a>
-                        <!-- <a class="collapse-item" <?= $this->uri->segment(1) == 'kasbon' && $this->uri->segment(2) == 'detail_tabungan'  ? 'active' : '' ?>href="<?= base_url() ?>tabungan/detail_tabungan">Detail Tabungan</a> -->
+                        <?php
+                        if ($this->session->userdata('role') == 1) {
+                        ?>
+                            <a class="collapse-item <?= $this->uri->segment(1) == 'kasbon' && $this->uri->segment(2) == 'add'  ? 'active' : '' ?>" href="<?= base_url() ?>kasbon/add">Tambah Kasbon</a>
+                            <a class="collapse-item" <?= $this->uri->segment(1) == 'kasbon' && $this->uri->segment(2) == 'verfikasi'  ? 'active' : '' ?>href="<?= base_url() ?>kasbon/verifikasi">Verifikasi</a>
+                            <!-- <a class="collapse-item" <?= $this->uri->segment(1) == 'kasbon' && $this->uri->segment(2) == 'detail_tabungan'  ? 'active' : '' ?>href="<?= base_url() ?>tabungan/detail_tabungan">Detail Tabungan</a> -->
+
+                        <?php
+                        }
+                        ?>
                     </div>
                 </div>
             </li>

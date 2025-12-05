@@ -63,11 +63,17 @@ class Tabungan extends CI_Controller
             $row[] = $cat->pos_rate;
             $row[] = $cat->nolsp;
 
-            $row[] = '<a class="btn btn-primary m-1" href="' . base_url('tabungan/detail_tabungan/' . $cat->no_tabungan) . '">Detail</a> <a class="btn btn-warning m-1" href="' . base_url('tabungan/edit/' . $cat->no_cib) . '">Edit</a> <a class="btn btn-danger m-1" 
+            if ($this->session->userdata('role') == 1) {
+                $row[] = '<a class="btn btn-primary m-1" href="' . base_url('tabungan/detail_tabungan/' . $cat->no_tabungan) . '">Detail</a> <a class="btn btn-warning m-1" href="' . base_url('tabungan/edit/' . $cat->no_cib) . '">Edit</a> <a class="btn btn-danger m-1" 
    href="javascript:void(0)" 
    onclick="confirmDelete(' . $cat->no_cib . ')">
     Delete
 </a>';
+            } else {
+
+                $row[] = '<a class="btn btn-primary m-1" href="' . base_url('tabungan/detail_tabungan/' . $cat->no_tabungan) . '">Detail</a>';
+            }
+
 
             $data[] = $row;
         }

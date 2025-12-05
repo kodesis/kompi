@@ -12,7 +12,15 @@
         <div class="card-header py-3 d-flex justify-content-between align-items-center">
             <h6 class="m-0 font-weight-bold text-primary">Kasbon Table</h6>
 
-            <a href="<?= base_url('kasbon/add') ?>" class="btn btn-primary btn-sm">Add Kasbon</a>
+
+            <?php
+            if ($this->session->userdata('role') == 1) {
+            ?>
+                <a href="<?= base_url('kasbon/add') ?>" class="btn btn-primary btn-sm">Add Kasbon</a>
+
+            <?php
+            }
+            ?>
         </div>
         <div class="card-body">
             <div class="table-responsive">

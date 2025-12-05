@@ -14,6 +14,9 @@ class Kasbon_m extends CI_Model
         $this->db->select('t_kasbon.*, t_nasabah.nama');
         $this->db->from('t_kasbon');
         $this->db->join('t_nasabah', 't_nasabah.no_cib = t_kasbon.id_nasabah');
+        if ($this->session->userdata('role') == 2) {
+            $this->db->where('id_nasabah', $this->session->userdata('user_user_id'));
+        }
         $i = 0;
 
         foreach ($this->column_search as $item) // loop column 

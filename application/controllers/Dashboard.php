@@ -42,19 +42,19 @@ class Dashboard extends CI_Controller
             $this->db->from('t_nasabah');
             $this->db->where('role', '2');
             $total_anggota = $this->db->get()->num_rows();
-            $data['total_anggota'] = $total_anggota;
+            $data['total_anggota'] = (float)$total_anggota;
 
             $this->db->select('sum(nominal) as nominal');
             $this->db->from('t_tabungan');
             $this->db->where('status_tabungan', 'Aktif');
             $total_tabungan = $this->db->get()->row();
-            $data['total_tabungan'] = $total_tabungan->nominal;
+            $data['total_tabungan'] = (float)$total_tabungan->nominal;
 
             $this->db->select('sum(nominal) as nominal');
             $this->db->from('t_kasbon');
             $this->db->where('status', '1');
             $total_kasbon = $this->db->get()->row();
-            $data['total_kasbon'] = $total_kasbon->nominal;
+            $data['total_kasbon'] = (float)$total_kasbon->nominal;
             // --- Revised Date Generation and Data Merging ---
 
             // ========================================
@@ -135,15 +135,14 @@ class Dashboard extends CI_Controller
             $this->db->where('status_tabungan', 'Aktif');
             $this->db->where('no_cib', $this->session->userdata('user_user_id'));
             $total_tabungan = $this->db->get()->row();
-            $data['total_tabungan'] = $total_tabungan->nominal;
+            $data['total_tabungan'] = (float)$total_tabungan->nominal;
 
             $this->db->select('sum(nominal) as nominal');
             $this->db->from('t_kasbon');
             $this->db->where('status', '1');
             $this->db->where('id_nasabah', $this->session->userdata('user_user_id'));
             $total_kasbon = $this->db->get()->row();
-            $data['total_kasbon'] = $total_kasbon->nominal;
-            // --- Revised Date Generation and Data Merging ---
+            $data['total_kasbon'] = (float)$total_kasbon->nominal;            // --- Revised Date Generation and Data Merging ---
 
             // 1. Fetch the actual data from the database (Same query as before, but without the specific date WHERE clause)
             $this->db->select('

@@ -18,6 +18,10 @@ class Tabungan_m extends CI_Model
         if ($nasabah == null) {
             $this->db->where('t_tabungan.no_cib', $nasabah);
         }
+
+        if ($this->session->userdata('role') == 2) {
+            $this->db->where('t_tabungan.no_cib', $this->session->userdata('user_user_id'));
+        }
         $i = 0;
 
         foreach ($this->column_search as $item) // loop column 

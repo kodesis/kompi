@@ -12,7 +12,15 @@
         <div class="card-header py-3 d-flex justify-content-between align-items-center">
             <h6 class="m-0 font-weight-bold text-primary">Simpanan Table</h6>
 
-            <a href="<?= base_url('tabungan/add_simpanan') ?>" class="btn btn-primary btn-sm">Add Simpanan</a>
+
+            <?php
+            if ($this->session->userdata('role') == 1) {
+            ?>
+                <a href="<?= base_url('tabungan/add_simpanan') ?>" class="btn btn-primary btn-sm">Add Simpanan</a>
+
+            <?php
+            }
+            ?>
         </div>
         <div class="card-body">
             <div class="row">

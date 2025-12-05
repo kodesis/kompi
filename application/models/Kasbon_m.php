@@ -4,11 +4,11 @@ class Kasbon_m extends CI_Model
 {
 
     var $table = 't_kasbon';
-    var $column_order = array('id', 'nama', 'tanggal_jam', 'nominal', 'nominal_kredit', 'nominal_cash'); //set column field database for datatable orderable
-    var $column_search = array('id', 'nama', 'tanggal_jam', 'nominal', 'nominal_kredit', 'nominal_cash'); //set column field database for datatable searchable 
+    var $column_order = array('id', 'nama', 'tanggal_jam', 'nominal', 'nominal_kredit', 'nominal_cash', 'status'); //set column field database for datatable orderable
+    var $column_search = array('id', 'nama', 'tanggal_jam', 'nominal', 'nominal_kredit', 'nominal_cash', 'status'); //set column field database for datatable searchable 
     var $order = array('id' => 'desc'); // default order 
 
-    function _get_datatables_query()
+    function _get_datatables_query($nasabah = null)
     {
 
         $this->db->select('t_kasbon.*, t_nasabah.nama');
@@ -16,6 +16,10 @@ class Kasbon_m extends CI_Model
         $this->db->join('t_nasabah', 't_nasabah.no_cib = t_kasbon.id_nasabah');
         if ($this->session->userdata('role') == 2) {
             $this->db->where('id_nasabah', $this->session->userdata('user_user_id'));
+        } else {
+            if ($nasabah != 'ALL') {
+                $this->db->where('t_kasbon.id_nasabah', $nasabah);
+            }
         }
         $i = 0;
 
@@ -50,29 +54,88 @@ class Kasbon_m extends CI_Model
         }
     }
 
-    function get_datatables()
+    function get_datatables($nasabah)
     {
-        $this->_get_datatables_query();
+        $this->_get_datatables_query($nasabah);
         if ($_POST['length'] != -1)
             $this->db->limit($_POST['length'], $_POST['start']);
         $query = $this->db->get();
         return $query->result();
     }
 
-    function count_filtered()
+    function count_filtered($nasabah)
     {
-        $this->_get_datatables_query();
+        $this->_get_datatables_query($nasabah);
         $query = $this->db->get();
         return $query->num_rows();
     }
 
-    function count_all()
+    function count_all($nasabah)
     {
 
-        $this->_get_datatables_query();
+        $this->_get_datatables_query($nasabah);
         $query = $this->db->get();
 
         return $this->db->count_all_results();
+    }
+    public function get_filtered_nominal_sum($nasabah)
+    {
+        // 1. Run the base query setup, including JOINS, WHERE (user role), and the SEARCH filter.
+        // NOTE: This intentionally excludes the LIMIT and ORDER BY clauses from DataTables.
+        $this->_get_datatables_query($nasabah);
+
+        // 2. Change the SELECT clause to calculate the SUM(nominal).
+        // The previous _get_datatables_query($nasabah) had: $this->db->select('t_kasbon.*, t_nasabah.nama');
+        // We override that SELECT with SUM before executing.
+        $this->db->select('SUM(t_kasbon.nominal) as filtered_nominal_sum', FALSE);
+
+        // 3. Execute the query
+        // We use get()->row() because we only expect one result row containing the sum.
+        $query = $this->db->get();
+        $result = $query->row();
+
+        // 4. Return the result, ensuring 0 is returned if the sum is NULL (i.e., no filtered records)
+        return $result->filtered_nominal_sum ?? 0;
+    }
+
+    public function get_filtered_nominal_kredit_sum($nasabah)
+    {
+        // 1. Run the base query setup, including JOINS, WHERE (user role), and the SEARCH filter.
+        // NOTE: This intentionally excludes the LIMIT and ORDER BY clauses from DataTables.
+        $this->_get_datatables_query($nasabah);
+
+        // 2. Change the SELECT clause to calculate the SUM(nominal).
+        // The previous _get_datatables_query($nasabah) had: $this->db->select('t_kasbon.*, t_nasabah.nama');
+        // We override that SELECT with SUM before executing.
+        $this->db->select('SUM(t_kasbon.nominal_kredit) as filtered_nominal_sum', FALSE);
+
+        // 3. Execute the query
+        // We use get()->row() because we only expect one result row containing the sum.
+        $query = $this->db->get();
+        $result = $query->row();
+
+        // 4. Return the result, ensuring 0 is returned if the sum is NULL (i.e., no filtered records)
+        return $result->filtered_nominal_sum ?? 0;
+    }
+
+    public function get_filtered_nominal_cash_sum($nasabah)
+    {
+        // 1. Run the base query setup, including JOINS, WHERE (user role), and the SEARCH filter.
+        // NOTE: This intentionally excludes the LIMIT and ORDER BY clauses from DataTables.
+        $this->_get_datatables_query($nasabah);
+
+        // 2. Change the SELECT clause to calculate the SUM(nominal).
+        // The previous _get_datatables_query($nasabah) had: $this->db->select('t_kasbon.*, t_nasabah.nama');
+        // We override that SELECT with SUM before executing.
+        $this->db->select('SUM(t_kasbon.nominal_cash) as filtered_nominal_sum', FALSE);
+
+        // 3. Execute the query
+        // We use get()->row() because we only expect one result row containing the sum.
+        $query = $this->db->get();
+        $result = $query->row();
+
+        // 4. Return the result, ensuring 0 is returned if the sum is NULL (i.e., no filtered records)
+        return $result->filtered_nominal_sum ?? 0;
     }
 
     function get_segnasabah()
@@ -214,5 +277,26 @@ class Kasbon_m extends CI_Model
         // return $this->db->affected_rows() > 0;
 
         return TRUE; // Simple return for successful query execution
+    }
+
+    public function get_kasbon_data_for_export($nasabah, $date_from, $date_to)
+    {
+        $this->db->select('t_kasbon.*, t_nasabah.nama');
+        $this->db->from('t_kasbon');
+        $this->db->join('t_nasabah', 't_nasabah.no_cib = t_kasbon.id_nasabah', 'LEFT');
+
+        // Filter by Date Range
+        $this->db->where('t_kasbon.tanggal_jam >=', $date_from);
+        $this->db->where('t_kasbon.tanggal_jam <=', $date_to . ' 23:59:59');
+        $this->db->where('t_kasbon.status', 1);
+
+        // Filter by Nasabah (User)
+        if ($nasabah != 'ALL') {
+            $this->db->where('t_kasbon.id_nasabah', $nasabah);
+        }
+
+        $this->db->order_by('t_kasbon.tanggal_jam', 'ASC');
+
+        return $this->db->get()->result();
     }
 }

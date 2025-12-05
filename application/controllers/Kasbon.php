@@ -35,37 +35,132 @@ class Kasbon extends CI_Controller
 
     public function index()
     {
+        $data['nasabah'] = $this->kasbon_m->get_all_nasabah();
         $data['content'] = 'webview/admin/kasbon/kasbon_table';
         $data['content_js'] = 'webview/admin/kasbon/kasbon_table_js';
         $this->load->view('parts/admin/Wrapper', $data);
     }
 
+    public function get_nasabah_detail()
+    {
+        // 1. Check if the request is an AJAX request
+        if ($this->input->is_ajax_request()) {
+
+            // 2. Get the customer ID ('no_cib') sent via POST from the AJAX call
+            $no_cib = $this->input->post('no_cib');
+
+            // 3. Call the Model to fetch the data
+            // The model method 'get_nasabah' already exists and returns a single row object (or NULL).
+            $nasabah_detail = $this->kasbon_m->get_nasabah($no_cib);
+
+            // 4. Prepare and send the JSON response
+            if ($nasabah_detail) {
+                // Success: Return the needed fields (limit_kredit and usage_kredit)
+                echo json_encode([
+                    'success' => true,
+                    'data' => [
+                        // Ensure these property names match the columns in your 't_nasabah' table
+                        'limit_kredit' => $nasabah_detail->kredit_limit,
+                        'usage_kredit' => $nasabah_detail->kredit_usage,
+                    ]
+                ]);
+            } else {
+                // Failure: Customer not found
+                echo json_encode([
+                    'success' => false,
+                    'message' => 'Nasabah not found.'
+                ]);
+            }
+        } else {
+            // Optional: Block non-AJAX direct access
+            show_404();
+        }
+    }
+
     public function ajax_list()
     {
-        $list = $this->kasbon_m->get_datatables();
+        $nasabah = $this->input->post('nasabah');
+
+        $list = $this->kasbon_m->get_datatables($nasabah);
         $data = array();
         $no = $_POST['start'];
 
 
         foreach ($list as $cat) {
+            $date_string = $cat->tanggal_jam;
+            $timestamp = strtotime($date_string);
+
+            // 1. Define the Indonesian month names
+            $bulan = array(
+                1 => 'Januari',
+                'Februari',
+                'Maret',
+                'April',
+                'Mei',
+                'Juni',
+                'Juli',
+                'Agustus',
+                'September',
+                'Oktober',
+                'November',
+                'Desember'
+            );
+
+            // 2. Format the date components
+            $tanggal = date('d', $timestamp);      // Day (e.g., '12')
+            $bulan_index = (int)date('m', $timestamp); // Month number (e.g., 1)
+            $tahun = date('Y', $timestamp);        // Year (e.g., '2025')
+
+            // 3. Assemble the final date string
+            $formatted_date = $tanggal . ' ' . $bulan[$bulan_index] . ' ' . $tahun;
 
             $no++;
             $row = array();
             $row[] = $cat->id;
             // $row[] = $cat->no_cib;
             $row[] = $cat->nama;
-            $row[] = $cat->tanggal_jam;
-            $row[] = $cat->nominal;
-            $row[] = $cat->nominal_kredit;
-            $row[] = $cat->nominal_cash;
+            // $row[] = $cat->tanggal_jam;
+            $row[] = $formatted_date;
+            $row[] = 'Rp.' . number_format($cat->nominal);
+            $row[] = 'Rp.' . number_format($cat->nominal_kredit);
+            $row[] = 'Rp.' . number_format($cat->nominal_cash);
+
+            $status_html = ''; // Initialize the variable for the status display
+
+            if ($cat->status == 1) {
+                // Status is 1 (Terverifikasi / Verified)
+                // Use a Bootstrap badge/button class like btn-success for green
+                $status_html = '<span class="badge badge-success">Terverifikasi</span>';
+
+                // If you specifically need a clickable button:
+                // $status_html = '<button class="btn btn-success btn-sm">Terverifikasi</button>';
+
+            } else {
+                // Status is 0 (Belum Diverifikasi / Not Verified)
+                // Use a Bootstrap badge/button class like btn-danger for red
+                $status_html = '<span class="badge badge-danger">Belum Diverifikasi</span>';
+
+                // If you specifically need a clickable button:
+                // $status_html = '<button class="btn btn-danger btn-sm">Belum Diverifikasi</button>';
+            }
+
+            // Add the generated HTML to the row
+            $row[] = $status_html;
 
             $data[] = $row;
         }
 
+        $total_nominal = $this->kasbon_m->get_filtered_nominal_sum($nasabah);
+        $total_nominal_kredit = $this->kasbon_m->get_filtered_nominal_kredit_sum($nasabah);
+        $total_nominal_cash = $this->kasbon_m->get_filtered_nominal_cash_sum($nasabah);
+
         $output = array(
             "draw" => $_POST['draw'],
-            "recordsTotal" => $this->kasbon_m->count_all(),
-            "recordsFiltered" => $this->kasbon_m->count_filtered(),
+            "recordsTotal" => $this->kasbon_m->count_all($nasabah),
+            "recordsFiltered" => $this->kasbon_m->count_filtered($nasabah),
+            "total_nominal_sum" => number_format($total_nominal, 0, ',', '.'), // Format and include in response
+            "total_nominal_kredit_sum" => number_format($total_nominal_kredit, 0, ',', '.'), // Format and include in response
+            "total_nominal_cash_sum" => number_format($total_nominal_cash, 0, ',', '.'), // Format and include in response
             "data" => $data,
         );
         echo json_encode($output);
@@ -246,5 +341,149 @@ class Kasbon extends CI_Controller
         } else {
             echo json_encode(array("status" => FALSE, "Pesan" => 'Token Salah'));
         }
+    }
+
+    public function export_kasbon_by_date()
+    {
+        // Mengambil data dengan filter 'Belum Dibayar'
+        $nasabah = $this->input->post('nasabah');
+        $tanggal_dari = $this->input->post('tanggal_dari');
+        $tanggal_sampai = $this->input->post('tanggal_sampai');
+
+        // echo $nasabah;
+        // echo $tanggal_dari;
+        // echo $tanggal_sampai;
+        $list = $this->kasbon_m->get_kasbon_data_for_export($nasabah, $tanggal_dari, $tanggal_sampai);
+
+        // var_dump($list);
+        // Load library PhpSpreadsheet secara manual
+        // Baris ini memuat semua kelas yang dibutuhkan, jadi baris di bawahnya tidak diperlukan
+        require APPPATH . 'third_party/autoload.php';
+        // Hapus baris ini karena tidak diperlukan dan bisa menyebabkan masalah
+        require APPPATH . 'third_party/psr/simple-cache/src/CacheInterface.php';
+
+        // Membuat objek Spreadsheet baru
+        $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
+
+        // Mengatur header kolom
+        $sheet->setCellValue('A1', 'No');
+        $sheet->setCellValue('B1', 'Nama');
+        $sheet->setCellValue('C1', 'Tanggal Transaksi');
+        // $sheet->setCellValue('D1', 'Keterangan');
+        $sheet->setCellValue('D1', 'Nominal');
+        $sheet->setCellValue('E1', 'Nominal Kredit');
+        $sheet->setCellValue('F1', 'Nominal Cash');
+
+        // --- Initialize Total Variables ---
+        $total_nominal = 0;
+        $total_kredit = 0;
+        $total_cash = 0;
+        // ----------------------------------
+
+        // ------------------------------------------------------------------
+        // --- NEW HEADER STYLING SECTION ---
+
+        // 1. Define the style array
+        $headerStyle = [
+            'font' => [
+                'bold' => true,
+            ],
+            'fill' => [
+                // Use FILL_SOLID
+                'fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID,
+                // Hex code for Sky Blue (e.g., Light Sky Blue or similar)
+                'startColor' => [
+                    'argb' => 'FF87CEEB', // Hex code for light sky blue (FF is for opacity)
+                ],
+            ],
+            'borders' => [ // Optional: Add borders for better visibility
+                'allBorders' => [
+                    'borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN,
+                ],
+            ],
+        ];
+
+        // 2. Apply the style to the header range (A1 to F1)
+        $sheet->getStyle('A1:F1')->applyFromArray($headerStyle);
+
+        // --- END NEW HEADER STYLING SECTION ---
+        // ------------------------------------------------------------------
+
+
+        $row = 2;
+        $no = 1;
+        foreach ($list as $data) {
+            $sheet->setCellValue('A' . $row, $no++);
+            $sheet->setCellValue('B' . $row, $data->nama);
+
+            // Logika untuk menampilkan tanggal yang sudah diformat atau '-'
+            if (empty($data->tanggal_jam)) {
+                $sheet->setCellValue('C' . $row, '-');
+            } else {
+                $sheet->setCellValue('C' . $row, date('d F Y H:i:s', strtotime($data->tanggal_jam)));
+            }
+
+            $sheet->setCellValue('D' . $row, $data->nominal);
+            $sheet->setCellValue('E' . $row, $data->nominal_kredit);
+            $sheet->setCellValue('F' . $row, $data->nominal_cash);
+
+            $total_nominal += (float)$data->nominal;
+            $total_kredit += (float)$data->nominal_kredit;
+            $total_cash += (float)$data->nominal_cash;
+            // ----------------------------------------------
+            $row++;
+        }
+        // --- ADD TOTAL ROW SECTION ---
+        $highestColumn = $sheet->getHighestColumn();
+
+        // Define the row number for the total (one row after the last data row)
+        $total_row = $row;
+
+        // Merge the first three cells for the "Total" label
+        $sheet->mergeCells('A' . $total_row . ':C' . $total_row);
+        $sheet->setCellValue('A' . $total_row, 'TOTAL KESELURUHAN');
+
+        // Apply styling to the total row (e.g., bold)
+        $styleArray = [
+            'font' => ['bold' => true],
+            'fill' => ['fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID, 'startColor' => ['argb' => 'FFFFCC00']], // Optional: yellow background
+            'borders' => [ // Optional: Add borders for better visibility
+                'allBorders' => [
+                    'borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN,
+                ],
+            ],
+        ];
+        $sheet->getStyle('A' . $total_row . ':' . $highestColumn . $total_row)->applyFromArray($styleArray);
+
+        // Write the calculated sums
+        $sheet->setCellValue('D' . $total_row, $total_nominal);
+        $sheet->setCellValue('E' . $total_row, $total_kredit);
+        $sheet->setCellValue('F' . $total_row, $total_cash);
+
+        // --- END OF TOTAL ROW SECTION ---
+
+        // --- Add this section to auto-size the columns ---
+        foreach (range('A', $highestColumn) as $col) {
+            $sheet->getColumnDimension($col)->setAutoSize(true);
+        }
+        // --- End of new section ---
+
+        require APPPATH . 'third_party/autoload_zip.php';
+
+        // Gunakan Xlsx writer untuk menyimpan file
+        $writer = new \PhpOffice\PhpSpreadsheet\Writer\Xlsx($spreadsheet);
+
+        // Atur header untuk mengunduh file
+        header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        header('Content-Disposition: attachment; filename="Export_Kasbon_' . date('Ymd_His') . '.xlsx"');
+        header('Cache-Control: max-age=0');
+
+        // OUTPUT FILE KE BROWSER
+        // Baris ini adalah yang terpenting! Anda harus memanggilnya.
+        $writer->save('php://output');
+
+        // Hentikan eksekusi skrip setelah file selesai di-output
+        exit();
     }
 }

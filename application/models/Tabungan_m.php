@@ -15,12 +15,13 @@ class Tabungan_m extends CI_Model
         $this->db->from('t_tabungan');
         $this->db->join('t_nasabah', 't_tabungan.no_cib = t_nasabah.no_cib');
         $this->db->join('t_jenistabungan', 't_tabungan.jenis_tabungan = t_jenistabungan.kode_tabungan');
-        if ($nasabah == null) {
-            $this->db->where('t_tabungan.no_cib', $nasabah);
-        }
 
         if ($this->session->userdata('role') == 2) {
             $this->db->where('t_tabungan.no_cib', $this->session->userdata('user_user_id'));
+        } else {
+            if ($nasabah != 'ALL') {
+                $this->db->where('t_tabungan.no_cib', $nasabah);
+            }
         }
         $i = 0;
 
@@ -78,6 +79,26 @@ class Tabungan_m extends CI_Model
         $query = $this->db->get();
 
         return $this->db->count_all_results();
+    }
+
+    public function get_filtered_nominal_sum($nasabah)
+    {
+        // 1. Run the base query setup, including JOINS, WHERE (user role), and the SEARCH filter.
+        // NOTE: This intentionally excludes the LIMIT and ORDER BY clauses from DataTables.
+        $this->_get_datatables_query($nasabah);
+
+        // 2. Change the SELECT clause to calculate the SUM(nominal).
+        // The previous _get_datatables_query($nasabah) had: $this->db->select('t_kasbon.*, t_nasabah.nama');
+        // We override that SELECT with SUM before executing.
+        $this->db->select('SUM(t_tabungan.nominal) as filtered_nominal_sum', FALSE);
+
+        // 3. Execute the query
+        // We use get()->row() because we only expect one result row containing the sum.
+        $query = $this->db->get();
+        $result = $query->row();
+
+        // 4. Return the result, ensuring 0 is returned if the sum is NULL (i.e., no filtered records)
+        return $result->filtered_nominal_sum ?? 0;
     }
 
     function get_nasabah()
@@ -250,17 +271,17 @@ class Tabungan_m extends CI_Model
     }
 
     var $table_detail = 't_detail_tabungan';
-    var $column_order_detail = array('id', 'no_tabungan', 'transaksi', 'nominal', 'ket', 'tgl_transaksi', 'nama'); //set column field database for datatable orderable
-    var $column_search_detail = array('id', 'no_tabungan', 'transaksi', 'nominal', 'ket', 'tgl_transaksi', 'nama'); //set column field database for datatable searchable 
+    var $column_order_detail = array('id', 'transaksi', 'nominal', 'ket', 'tgl_transaksi', 'nama'); //set column field database for datatable orderable
+    var $column_search_detail = array('transaksi', 'nominal', 'ket', 'tgl_transaksi', 'nama'); //set column field database for datatable searchable 
     var $order_detail = array('tgl_transaksi' => 'desc'); // default order 
 
     function _get_datatables_query_detail($id)
     {
 
-        $this->db->select('t_detail_tabungan.*, t_user.nama');
+        $this->db->select('t_detail_tabungan.*, t_nasabah.nama');
         $this->db->from('t_detail_tabungan');
         // $this->db->join($this->db->database . '.users', 't_detail_tabungan.user_tr = users.nip');
-        $this->db->join('t_user', 't_detail_tabungan.user_tr = t_user.username');
+        $this->db->join('t_nasabah', 't_detail_tabungan.user_tr = t_nasabah.no_cib');
         $this->db->where('t_detail_tabungan.no_tabungan', $id);
         // $this->db->where('t_tabungan.id_perusahaan', $this->session->userdata('user_perusahaan_id'));
         $i = 0;
@@ -321,6 +342,26 @@ class Tabungan_m extends CI_Model
         return $this->db->count_all_results();
     }
 
+    public function get_filtered_nominal_sum_detail($id)
+    {
+        // 1. Run the base query setup, including JOINS, WHERE (user role), and the SEARCH filter.
+        // NOTE: This intentionally excludes the LIMIT and ORDER BY clauses from DataTables.
+        $this->_get_datatables_query_detail($id);
+
+        // 2. Change the SELECT clause to calculate the SUM(nominal).
+        // The previous _get_datatables_query($nasabah) had: $this->db->select('t_kasbon.*, t_nasabah.nama');
+        // We override that SELECT with SUM before executing.
+        $this->db->select('SUM(t_detail_tabungan.nominal) as filtered_nominal_sum', FALSE);
+
+        // 3. Execute the query
+        // We use get()->row() because we only expect one result row containing the sum.
+        $query = $this->db->get();
+        $result = $query->row();
+
+        // 4. Return the result, ensuring 0 is returned if the sum is NULL (i.e., no filtered records)
+        return $result->filtered_nominal_sum ?? 0;
+    }
+
     public function add_transaksi($data)
     {
         return $this->db->insert('t_log_transaksi', $data);
@@ -348,5 +389,44 @@ class Tabungan_m extends CI_Model
 
         $query = $this->db->get();
         return $query->row();
+    }
+    public function get_tabungan_data_for_export($nasabah)
+    {
+        $this->db->select('t_tabungan.*, t_nasabah.nama, t_nasabah.no_telp');
+        $this->db->from('t_tabungan');
+        $this->db->join('t_nasabah', 't_nasabah.no_cib = t_tabungan.no_cib', 'LEFT');
+        $this->db->where('t_nasabah.role !=', 1);
+
+        // Filter by Nasabah (User)
+        if ($nasabah != 'ALL') {
+            $this->db->where('t_tabungan.id_nasabah', $nasabah);
+        }
+
+        $this->db->order_by('t_tabungan.no_urut', 'ASC');
+
+        return $this->db->get()->result();
+    }
+
+    public function get_detail_tabungan_data_for_export($nasabah, $date_from, $date_to)
+    {
+        $this->db->select('t_detail_tabungan.*, t_nasabah.nama');
+        $this->db->from('t_detail_tabungan');
+        $this->db->join('t_tabungan', 't_tabungan.no_tabungan = t_detail_tabungan.no_tabungan', 'LEFT');
+        $this->db->join('t_nasabah', 't_nasabah.no_cib = t_tabungan.no_cib', 'LEFT');
+
+        $this->db->where('t_nasabah.role !=', 1);
+
+        // Filter by Date Range
+        $this->db->where('t_detail_tabungan.tgl_transaksi >=', $date_from);
+        $this->db->where('t_detail_tabungan.tgl_transaksi <=', $date_to . ' 23:59:59');
+
+        // Filter by Nasabah (User)
+        if ($nasabah != 'ALL') {
+            $this->db->where('t_tabungan.no_cib', $nasabah);
+        }
+
+        $this->db->order_by('t_detail_tabungan.tgl_transaksi', 'ASC');
+
+        return $this->db->get()->result();
     }
 }

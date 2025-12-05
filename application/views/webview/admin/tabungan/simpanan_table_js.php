@@ -21,6 +21,15 @@
                 type: "POST",
                 data: function(d) {
                     d.nasabah = $('#nasabah_search').val();
+                },
+                dataSrc: function(json) {
+                    // Check if the custom total exists in the JSON response
+                    if (json.total_nominal_sum !== undefined) {
+                        // Update the HTML element with the total value
+                        $('#total_nominal_display').text('Rp' + json.total_nominal_sum);
+                    }
+                    // Return the 'data' array for the DataTable to render
+                    return json.data;
                 }
             },
             order: [],

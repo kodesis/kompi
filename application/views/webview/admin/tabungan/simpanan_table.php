@@ -23,21 +23,6 @@
             ?>
         </div>
         <div class="card-body">
-            <div class="row">
-                <div class="form-group col-4">
-                    <label for="">Nasabah</label>
-                    <select class="form-control" name="nasabah" id="nasabah_search">
-                        <option selected>ALL</option>
-                        <?php
-                        foreach ($nasabah as $n) {
-                        ?>
-                            <option value="<?= $n->no_cib ?>"><?= $n->nama ?></option>
-                        <?php
-                        }
-                        ?>
-                    </select>
-                </div>
-            </div>
             <div class="table-responsive">
                 <table class="table table-bordered" id="dataTable" width="100%" cellspacing="0">
                     <thead>
@@ -52,6 +37,15 @@
                             <!-- <th>Action</th> -->
                         </tr>
                     </thead>
+                    <tfoot>
+                        <tr>
+                            <th colspan="2" style="text-align:right">Total:</th>
+                            <th id="total_nominal_display">0</th>
+                            <th></th>
+                            <th></th>
+                            <th></th>
+                        </tr>
+                    </tfoot>
                     <!-- <tfoot>
                         <tr>
 
@@ -82,4 +76,6 @@
     </div>
 
 </div>
+
+
 <!-- /.container-fluid -->

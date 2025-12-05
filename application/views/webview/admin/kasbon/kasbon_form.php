@@ -69,11 +69,11 @@
                 </div>
                 <div class="form-group col-6">
                     <label for="nominal_kredit_add">Nominal Kredit</label>
-                    <input disabled type="text" class="form-control" name="nominal_kredit" id="nominal_kredit_add" value="<?= set_value('nominal_kredit', $form_data['nominal_kredit'] ?? 0) ?>">
+                    <input disabled type="text" class="form-control" name="nominal_kredit" id="nominal_kredit_add" value="<?= set_value('nominal_kredit', $form_data['nominal_kredit'] ?? 0) ?>" readonly>
                 </div>
                 <div class="form-group col-6">
                     <label for="nominal_cash_add">Nominal Cash</label>
-                    <input disabled type="text" class="form-control" name="nominal_cash" id="nominal_cash_add" value="<?= set_value('nominal_cash', $form_data['nominal_cash'] ?? 0) ?>">
+                    <input disabled type="text" class="form-control" name="nominal_cash" id="nominal_cash_add" value="<?= set_value('nominal_cash', $form_data['nominal_cash'] ?? 0) ?>" readonly>
                 </div>
 
             </form>

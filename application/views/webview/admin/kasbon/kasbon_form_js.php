@@ -1,5 +1,11 @@
 <script>
     $(document).ready(function() {
+        $('#nasabah_add').select2({
+            // Optional configuration:
+            placeholder: 'Cari Nasabah', // Text displayed when nothing is selected
+            allowClear: true // Allows a user to clear the selection
+        });
+
         $('#nasabah_add').on('change', function() {
             var nasabah_id = $(this).val();
             var infoSection = $('#kredit_info_section');

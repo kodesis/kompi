@@ -10,12 +10,17 @@ class Dashboard_m extends CI_Model
         $end_date = date('Y-m-t'); // t gives the last day of the current month
 
         // Pilih bulan (nama singkat) dan SUM nominal
-        $this->db->select("DATE_FORMAT(tgl_transaksi, '%b') AS month_label, SUM(nominal) AS total_nominal", FALSE);
+        $this->db->select("DATE_FORMAT(tgl_transaksi, '%b') AS month_label, SUM(t_detail_tabungan.nominal) AS total_nominal", FALSE);
         $this->db->from('t_detail_tabungan');
+        $this->db->join('t_tabungan', 't_tabungan.no_tabungan = t_detail_tabungan.no_tabungan');
 
         // Filter data dari awal tahun hingga akhir bulan ini
         $this->db->where("tgl_transaksi >=", $start_date);
         $this->db->where("tgl_transaksi <=", $end_date);
+
+        if ($this->session->userdata('role') == 2) {
+            $this->db->where('no_cib', $this->session->userdata('user_user_id'));
+        }
 
         // Kelompokkan hasilnya berdasarkan tahun dan bulan
         $this->db->group_by("YEAR(tgl_transaksi), MONTH(tgl_transaksi)");
@@ -31,12 +36,15 @@ class Dashboard_m extends CI_Model
         $start_year = date('Y') - 4; // To include the current year, we only go back 4 full years (e.g., 2025 - 4 = 2021)
 
         // Select the year and the sum of 'nominal'
-        $this->db->select("YEAR(tgl_transaksi) AS year, SUM(nominal) AS total_nominal", FALSE);
+        $this->db->select("YEAR(tgl_transaksi) AS year, SUM(t_detail_tabungan.nominal) AS total_nominal", FALSE);
         $this->db->from('t_detail_tabungan');
+        $this->db->join('t_tabungan', 't_tabungan.no_tabungan = t_detail_tabungan.no_tabungan');
 
         // Filter data to only include records from the start year up to the current year
         $this->db->where("YEAR(tgl_transaksi) >=", $start_year);
-
+        if ($this->session->userdata('role') == 2) {
+            $this->db->where('no_cib', $this->session->userdata('user_user_id'));
+        }
         // Group the results by year
         $this->db->group_by("YEAR(tgl_transaksi)");
 
@@ -61,6 +69,9 @@ class Dashboard_m extends CI_Model
     ');
         $this->db->from('t_kasbon');
         $this->db->where('status', '1');
+        if ($this->session->userdata('role') == 2) {
+            $this->db->where('id_nasabah', $this->session->userdata('user_user_id'));
+        }
 
         // 🎯 PERUBAHAN UTAMA: Filter dimulai dari Januari 1 tahun ini
         $this->db->where('tanggal_jam >=', $start_of_year);

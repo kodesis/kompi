@@ -940,15 +940,10 @@ class Tabungan extends CI_Controller
         require APPPATH . 'third_party/autoload.php';
         // Hapus baris ini karena tidak diperlukan dan bisa menyebabkan masalah
         require APPPATH . 'third_party/psr/simple-cache/src/CacheInterface.php';
-        // --- NEW VARIABLES FOR YEAR TRACKING ---
-        $currentYear = null;
-        $sheet = null; // Will be set inside the loop
-        // ---------------------------------------
 
         // Membuat objek Spreadsheet baru
         $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
         $sheet = $spreadsheet->getActiveSheet();
-
 
         // Mengatur header kolom
         $sheet->setCellValue('A1', 'No');
@@ -962,8 +957,6 @@ class Tabungan extends CI_Controller
         // --- Initialize Total Variables ---
         $total_nominal = 0;
         // ----------------------------------
-
-
 
         // ------------------------------------------------------------------
         // --- NEW HEADER STYLING SECTION ---
@@ -988,12 +981,6 @@ class Tabungan extends CI_Controller
             ],
         ];
 
-        $totalStyle = [
-            'font' => ['bold' => true],
-            'fill' => ['fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID, 'startColor' => ['argb' => 'FFFFCC00']],
-            'borders' => ['allBorders' => ['borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN]],
-        ];
-
         // 2. Apply the style to the header range (A1 to F1)
         $sheet->getStyle('A1:G1')->applyFromArray($headerStyle);
 
@@ -1004,77 +991,55 @@ class Tabungan extends CI_Controller
         $row = 2;
         $no = 1;
         foreach ($list as $data) {
-            $dataYear = date('Y', strtotime($data->tgl_transaksi));
-
-            // 1. CHECK IF A NEW SHEET IS NEEDED (New Year or First Record)
-            if ($dataYear != $currentYear) {
-
-                // IF this is not the first sheet, finalize the previous sheet's total and formatting
-                if ($currentYear !== null) {
-                    // Finalize Previous Sheet's Total and Formatting
-                    $this->finalizeSheet($sheet, $total_nominal, $row, $totalStyle);
-                    // Auto-size the previous sheet's columns
-                    $this->autoSizeColumns($sheet);
-                }
-
-                // Reset the current year and totals for the new sheet
-                $currentYear = $dataYear;
-                $total_nominal = 0;
-                $row = 1; // Start from row 1 for the new sheet's header
-                $no = 1;
-
-                // 2. CREATE NEW WORKSHEET
-                $sheetTitle = 'Tahun ' . $currentYear;
-
-                // Remove the default sheet if it's the first one
-                if ($spreadsheet->getSheetCount() == 1 && $spreadsheet->getSheet(0)->getTitle() == 'Worksheet') {
-                    $spreadsheet->getActiveSheet()->setTitle($sheetTitle);
-                    $sheet = $spreadsheet->getActiveSheet();
-                } else {
-                    $sheet = $spreadsheet->createSheet();
-                    $sheet->setTitle($sheetTitle);
-                }
-                $row++; // Move to row 2 for data after header setup
-
-                // 3. SET UP HEADER FOR THE NEW SHEET
-                $sheet->setCellValue('A1', 'No');
-                $sheet->setCellValue('B1', 'Nama');
-                $sheet->setCellValue('C1', 'No Tabungan');
-                $sheet->setCellValue('D1', 'Tipe Transaksi');
-                $sheet->setCellValue('E1', 'Tanggal Transaksi');
-                $sheet->setCellValue('F1', 'Keterangan');
-                $sheet->setCellValue('G1', 'Nominal');
-                $sheet->getStyle('A1:G1')->applyFromArray($headerStyle);
-            }
-
-            // 4. WRITE DATA ROW
             $sheet->setCellValue('A' . $row, $no++);
             $sheet->setCellValue('B' . $row, $data->nama);
             $sheet->setCellValue('C' . $row, $data->no_tabungan);
             $sheet->setCellValue('D' . $row, $data->transaksi);
-
+            // Logika untuk menampilkan tanggal yang sudah diformat atau '-'
             if (empty($data->tgl_transaksi)) {
                 $sheet->setCellValue('E' . $row, '-');
             } else {
                 $sheet->setCellValue('E' . $row, date('d F Y H:i:s', strtotime($data->tgl_transaksi)));
             }
-
             $sheet->setCellValue('F' . $row, $data->ket);
             $sheet->setCellValue('G' . $row, $data->nominal);
 
-            // 5. ACCUMULATE TOTAL
             $total_nominal += (float)$data->nominal;
+            // ----------------------------------------------
             $row++;
         }
+        // --- ADD TOTAL ROW SECTION ---
+        $highestColumn = $sheet->getHighestColumn();
 
-        // 6. FINALIZE THE LAST SHEET
-        if ($currentYear !== null) {
-            $this->finalizeSheet($sheet, $total_nominal, $row, $totalStyle);
-            $this->autoSizeColumns($sheet);
+        // Define the row number for the total (one row after the last data row)
+        $total_row = $row;
+
+        // Merge the first three cells for the "Total" label
+        $sheet->mergeCells('A' . $total_row . ':F' . $total_row);
+        $sheet->setCellValue('A' . $total_row, 'TOTAL');
+
+        // Apply styling to the total row (e.g., bold)
+        $styleArray = [
+            'font' => ['bold' => true],
+            'fill' => ['fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID, 'startColor' => ['argb' => 'FFFFCC00']], // Optional: yellow background
+            'borders' => [ // Optional: Add borders for better visibility
+                'allBorders' => [
+                    'borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN,
+                ],
+            ],
+        ];
+        $sheet->getStyle('A' . $total_row . ':' . $highestColumn . $total_row)->applyFromArray($styleArray);
+
+        // Write the calculated sums
+        $sheet->setCellValue('G' . $total_row, $total_nominal);
+
+        // --- END OF TOTAL ROW SECTION ---
+
+        // --- Add this section to auto-size the columns ---
+        foreach (range('A', $highestColumn) as $col) {
+            $sheet->getColumnDimension($col)->setAutoSize(true);
         }
-
-        // Set the first sheet as active before saving (optional)
-        $spreadsheet->setActiveSheetIndex(0);
+        // --- End of new section ---
 
         require APPPATH . 'third_party/autoload_zip.php';
 
@@ -1092,32 +1057,5 @@ class Tabungan extends CI_Controller
 
         // Hentikan eksekusi skrip setelah file selesai di-output
         exit();
-    }
-
-    private function finalizeSheet($sheet, $total_nominal, $row, $totalStyle)
-    {
-        // Define the row number for the total (one row after the last data row)
-        $total_row = $row;
-
-        // Merge cells for the "TOTAL" label
-        $sheet->mergeCells('A' . $total_row . ':F' . $total_row);
-        $sheet->setCellValue('A' . $total_row, 'TOTAL TAHUN INI');
-
-        // Apply styling to the total row
-        $sheet->getStyle('A' . $total_row . ':' . $sheet->getHighestColumn() . $total_row)->applyFromArray($totalStyle);
-
-        // Write the calculated sum
-        $sheet->setCellValue('G' . $total_row, $total_nominal);
-    }
-
-    /**
-     * Helper function to auto-size columns.
-     */
-    private function autoSizeColumns($sheet)
-    {
-        $highestColumn = $sheet->getHighestColumn();
-        foreach (range('A', $highestColumn) as $col) {
-            $sheet->getColumnDimension($col)->setAutoSize(true);
-        }
     }
 }
